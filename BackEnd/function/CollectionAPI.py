@@ -33,9 +33,15 @@ class DistrictsChart(Resource):
                                        , func.count(Apartments.district), func.sum(Apartments.farCenter)).group_by(Apartments.district).all()
             for i in range(len(districts)):
                 dic = {}
-                dic['district_name'] = districts[i][0]
-                dic['pricePerM_mean'] = districts[i][1] / districts[i][2]
-                dic['farCenter_mean'] = districts[i][3] / districts[i][2]
+                dic['district'] = districts[i][0].title()
+                data['district'] = districts[i][0].title()
+                dic['count'] = districts[i][1]
+                dic['min'] = districts[i][2]
+                dic['max'] = districts[i][3]
+                dic['median'] = districts[i][4] / dic['count']
+                dic['lowerQuartile'] = dic['median'] - dic['median']/2
+                dic['upperQuartile'] = dic['median'] + dic['median']/2
+                dic['predictPricePerM'] = predictPrice(processInputData(data))['pricePerM']
                 districts[i] = dic
             return districts
         except Exception as exp:
