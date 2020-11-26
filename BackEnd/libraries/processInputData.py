@@ -72,7 +72,9 @@ def processInputData(data):
         data['district'] = label_district[data['district']]
 
     if 'investor' in data:
-        data['investor'] = label_investor[data['investor']]
+        try:
+            data['investor'] = label_investor[data['investor']]
+        except: pass
 
     return data
 
