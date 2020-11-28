@@ -111,12 +111,8 @@ const fakeApi = [
   }
 ]
 
-const images1 = [
+const images = [
   require('./../assets/imgpsh_fullsize_anim.png'),
-];
-
-const images2 = [
-  require('./../assets/chart2.png'),
 ];
 
 
@@ -125,14 +121,9 @@ const images2 = [
 const Chart = (props) => {
   console.log("---------API CHART-----------");
   console.log(fakeApi);
-  const [visible1, setIsVisible1] = useState(false);
-  const [visible2, setIsVisible2] = useState(false);
-  const showImageView1 = () => {
-    setIsVisible1(true)
-  }
-
-  const showImageView2 = () => {
-    setIsVisible2(true)
+  const [visible, setIsVisible] = useState(false);
+  const showImageView = () => {
+    setIsVisible(true)
   }
 
   return (
@@ -149,50 +140,27 @@ const Chart = (props) => {
 
       <View style={styles.container}>
         <View >
-          <TouchableOpacity
-            onPress={showImageView1}
+          <View
+            // onPress={showImageView}
           >
             <ScrollView horizontal={true}>
               <Image
                 source={require('./../assets/imgpsh_fullsize_anim.png')}
                 style={{
-                  aspectRatio: 1770 / 1338,
-                  width: Dimensions.get("screen").width
+                  aspectRatio: 1774 / 1340,
+                  width: Dimensions.get("screen").width * 2
                 }}
               />
             </ScrollView>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.line} />
-        <View>
-          <TouchableOpacity
-            onPress={showImageView2}
-          >
-            <ScrollView horizontal={true}>
-              <Image
-                source={require('./../assets/chart2.png')}
-                style={{
-                  aspectRatio: 2222 / 1284,
-                  width: Dimensions.get("screen").width
-                }}
-              />
-            </ScrollView>
-          </TouchableOpacity>
+          </View>
         </View>
       </View>
 
       <ImageView
-        images={images1}
+        images={images}
         imageIndex={0}
-        visible={visible1}
-        onRequestClose={() => setIsVisible1(false)}
-      />
-
-      <ImageView
-        images={images2}
-        imageIndex={0}
-        visible={visible2}
-        onRequestClose={() => setIsVisible2(false)}
+        visible={visible}
+        onRequestClose={() => setIsVisible(false)}
       />
 
       <View style={styles.boxFake} />
@@ -235,13 +203,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  line: {
-    width: "100%",
-    height: 10,
-    backgroundColor: "#dddddd",
-    marginBottom: 30,
-    marginTop: 30
-  }
+
 
 
 });

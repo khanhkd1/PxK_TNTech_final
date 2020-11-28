@@ -69,7 +69,7 @@ export default function ChooseScreen(props) {
           // onPress={() => props.navigation.navigate("ChungCuDemoScreen")}
           >
             <Octicons name="project" size={50} color="white" />
-            <Text style={styles.btnText}>{language === "VIE" ? "Dự Án" : "Land Project"}</Text>
+            <Text style={styles.btnText}>{language === "VIE" ? "Nhà Đất" : "Real Estate"}</Text>
           </TouchableOpacity>
           <SwitchSelector
             initial={0}

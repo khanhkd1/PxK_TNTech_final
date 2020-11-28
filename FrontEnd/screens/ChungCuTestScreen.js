@@ -16,6 +16,7 @@ import {
   ActivityIndicator,
   LayoutAnimation,
   UIManager,
+  Alert,
 } from 'react-native';
 import { TextInput } from 'react-native-gesture-handler';
 import DropDownPicker from 'react-native-dropdown-picker';
@@ -48,6 +49,12 @@ export default class ChungCuTestScreen extends React.Component {
   state = {
     isLoading: false,
     dataFromApi: null,
+    // dataFromApi: {
+    //   "pricePerM": 35.4,
+    //   "score": 0.5487163906853896,
+    //   "totalPrice": 1770,
+    // },
+    ApiChart: [],
     ChuDauTu: "",
     DienTich: "",
     HuongNha: "",
@@ -243,12 +250,13 @@ export default class ChungCuTestScreen extends React.Component {
 
 
   onSubmit = async () => {
-    const { ViTri, DienTich, ChuDauTu, SoPhongNgu, SoPhongTam, NoiThat, HuongNha, HuongBanCong, Loai, CachTrungTam } = this.state;
+    const { ViTri, DienTich, ChuDauTu, SoPhongNgu, SoPhongTam, NoiThat, HuongNha, HuongBanCong, Loai, CachTrungTam, ApiChart } = this.state;
 
     //  call API
     Keyboard.dismiss();
-    if (ViTri && DienTich && SoPhongNgu && SoPhongTam) {
 
+
+    if (ViTri?.value && DienTich && SoPhongNgu?.value && SoPhongTam?.value) {
 
       const infoToApi = {
         district: ViTri.value !== 'choose' ? ViTri.value : null,
@@ -273,9 +281,26 @@ export default class ChungCuTestScreen extends React.Component {
         isLoading: true
       })
 
-
-
       console.log("infoToApi: ", infoToApi);
+
+      await fetch('https://pxk-api.herokuapp.com/predictchart', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(infoToApi),
+      })
+        .then((response) => response.json())
+        .then((responseJson) => {
+          // console.log("predictchart: ");
+          // console.log(responseJson);
+          this.setState({
+            ApiChart: responseJson
+          })
+        })
+        .catch((err) => console.log("errors: " + err))
+
       await fetch('https://pxk-api.herokuapp.com/predict', {
         method: 'POST',
         headers: {
@@ -286,11 +311,14 @@ export default class ChungCuTestScreen extends React.Component {
       })
         .then((response) => response.json())
         .then((responseJson) => {
+          LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
+
           console.log(responseJson);
           if (responseJson) {
             let dataFromApi = {
               pricePerM: responseJson.pricePerM,
-              score: responseJson.score
+              score: responseJson.score,
+              totalPrice: responseJson.totalPrice,
             }
             const infoToHistory = {
               STT: 0,
@@ -344,7 +372,7 @@ export default class ChungCuTestScreen extends React.Component {
     <View
       style={{
         backgroundColor: '#7066f6',
-        height: 450,
+        height: 300,
       }}
     >
       <HistoryTableScreen language={this.props.route.params.language} data={this.state.history} />
@@ -354,10 +382,16 @@ export default class ChungCuTestScreen extends React.Component {
 
   onReset = () => {
     const { status } = this.state;
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
     this.setState({
       DienTich: "",
       CachTrungTam: "",
-      dataFromApi: null
+      dataFromApi: null,
+      status: {
+        addButton: 0,
+        ChuDauTu: false,
+        CachTrungTam: false
+      },
     })
     this.controllerViTri.reset();
     this.controllerSoPhongTam.reset();
@@ -394,10 +428,50 @@ export default class ChungCuTestScreen extends React.Component {
     });
   }
 
+  toApiChartView = () => {
+    const { ApiChart } = this.state;
+
+    if (ApiChart.length > 0) {
+      Alert.alert(
+        'Xem API Chart',
+        'Click để sang màn hình API Chart',
+        [
+          {
+            text: 'Cancel',
+            onPress: () => console.log('OK Pressed'),
+            style: 'cancel'
+          },
+          { text: 'OK', onPress: () => this.props.navigation.navigate("ApiChartView", ApiChart) }
+        ],
+        { cancelable: false }
+      )
+    } else {
+      Alert.alert(
+        'Nhập thông tin cần thiết để có thể xem data từ API',
+        'Vui lòng nhập lại',
+        [
+          { text: 'OK' }
+        ],
+        { cancelable: false }
+      )
+    }
+
+    // Alert.alert(
+    //   'Nhập thông tin cần thiết để có thể xem data từ API',
+    //   [
+    //     {
+    //       text: 'OK',
+    //       style: 'cancel'
+    //     },
+    //   ],
+    //   { cancelable: false }
+    // )
+  }
+
   render() {
     // console.log("lang:" ,this.props.route.params.language)
     const { language } = this.props.route.params;
-    const { modalVisible, modalMoreVisible, status, DienTich, CachTrungTam, isLoading, dataFromApi } = this.state;
+    const { modalVisible, modalMoreVisible, status, DienTich, CachTrungTam, isLoading, dataFromApi, ApiChart } = this.state;
     return (
       <>
         <KeyboardAvoidingView
@@ -430,14 +504,23 @@ export default class ChungCuTestScreen extends React.Component {
             <TouchableOpacity
               style={styles.priceWrapper}
               onPress={() => {
-                this.sheetRef.current.snapTo(300);
+                this.sheetRef.current.snapTo(200);
                 Keyboard.dismiss();
               }}
             >
               {dataFromApi ?
                 <>
-                  <Entypo name="price-tag" size={height * width / 16000} color="#fff" />
-                  <Text style={styles.priceText}>{I18n.toNumber(dataFromApi.pricePerM * 1000000, { precision: 0 })} VNĐ</Text>
+                  <View
+                    style={{ flexDirection: "row" }}
+                  >
+                    {/* <Entypo name="price-tag" size={28} color="#fff" /> */}
+                    {/* <MaterialCommunityIcons name="tilde" size={28} color="#fff" /> */}
+                    {/* <Text style={styles.priceText}>{I18n.toNumber(dataFromApi.pricePerM * 1000000, { precision: 0 })} VNĐ</Text> */}
+                    {/* Math.round(num * 100 + Number.EPSILON) / 100 */}
+                    <Text style={styles.priceText}>~ {Math.round(dataFromApi?.pricePerM)} triệu VNĐ</Text>
+                  </View>
+                  <Text style={styles.priceTextSmall}>Giá Căn: {Math.round(dataFromApi?.totalPrice)} triệu VNĐ</Text>
+
                 </> :
                 <Text style={styles.noPriceText}>{language === "VIE" ? "Nhập 4 thông tin cần thiết" : "Enter 4 required information"}</Text>
                 // <Entypo name="creative-commons-noncommercial-us" size={height * width / 15000} color="#fff" />
@@ -448,18 +531,22 @@ export default class ChungCuTestScreen extends React.Component {
               <TouchableOpacity
                 onPress={() => this.onReset()}
               >
-                <EvilIcons name="refresh" size={40} color="#fff" />
+                <EvilIcons name="refresh" size={50} color="#fff" />
               </TouchableOpacity>
-              <ProgressCircle
-                percent={dataFromApi ? dataFromApi.score * 100 : 0}
-                radius={20}
-                borderWidth={4}
-                color="#fff"
-                bgColor="#7066f6"
-                shadowColor="#7066f6"
+              <TouchableOpacity
+                onPress={() => this.toApiChartView()}
               >
-                <Text style={{ fontSize: 10, color: "#fff" }}>{dataFromApi ? Math.ceil(dataFromApi.score * 100) : 0}%</Text>
-              </ProgressCircle>
+                <ProgressCircle
+                  percent={dataFromApi ? dataFromApi.score * 100 : 0}
+                  radius={26}
+                  borderWidth={6}
+                  color="#f7877e"
+                  bgColor="#7066f6"
+                  shadowColor="#7066f6"
+                >
+                  <Text style={{ fontSize: 16, color: "#fff" }}>{dataFromApi ? Math.ceil(dataFromApi.score * 100) : 0}%</Text>
+                </ProgressCircle>
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -475,7 +562,6 @@ export default class ChungCuTestScreen extends React.Component {
             style={{ flex: 1 }}
           >
             <ScrollView
-              bounces={false}
               ref={(c) => { this._scroll = c; }}
               style={{ flex: 1 }}
             >
@@ -528,47 +614,47 @@ export default class ChungCuTestScreen extends React.Component {
 
                           {/* disable btn */}
                           {/* {!status.Loai && */}
-                            <TouchableHighlight
-                              style={styles.modalButtonDisable}
-                              disabled={true}
-                              onPress={() => {
-                                this.setState({ status: { ...status, addButton: status.addButton + 1, Loai: true }, modalVisible: false })
-                              }}>
-                              <Text style={styles.textStyle}>{language === "VIE" ? "Loại Chung Cư" : "Type of Apartment"}</Text>
-                            </TouchableHighlight>
+                          <TouchableHighlight
+                            style={styles.modalButtonDisable}
+                            disabled={true}
+                            onPress={() => {
+                              this.setState({ status: { ...status, addButton: status.addButton + 1, Loai: true }, modalVisible: false })
+                            }}>
+                            <Text style={styles.textStyle}>{language === "VIE" ? "Loại Chung Cư" : "Type of Apartment"}</Text>
+                          </TouchableHighlight>
                           {/* }
                           {!status.HuongNha && */}
-                            <TouchableHighlight
-                              style={styles.modalButtonDisable}
-                              disabled={true}
-                              onPress={() => {
-                                LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
-                                this.setState({ status: { ...status, addButton: status.addButton + 1, HuongNha: true }, modalVisible: false })
-                              }}>
-                              <Text style={styles.textStyle}>{language === "VIE" ? "Hướng Nhà" : "Home Direction"}</Text>
-                            </TouchableHighlight>
+                          <TouchableHighlight
+                            style={styles.modalButtonDisable}
+                            disabled={true}
+                            onPress={() => {
+                              LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
+                              this.setState({ status: { ...status, addButton: status.addButton + 1, HuongNha: true }, modalVisible: false })
+                            }}>
+                            <Text style={styles.textStyle}>{language === "VIE" ? "Hướng Nhà" : "Home Direction"}</Text>
+                          </TouchableHighlight>
                           {/* }
                           {!status.HuongBanCong && */}
-                            <TouchableHighlight
-                              style={styles.modalButtonDisable}
-                              disabled={true}
-                              onPress={() => {
-                                LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
-                                this.setState({ status: { ...status, addButton: status.addButton + 1, HuongBanCong: true }, modalVisible: false })
-                              }}>
-                              <Text style={styles.textStyle}>{language === "VIE" ? "Hướng Ban Công" : "Balcony Direction"}</Text>
-                            </TouchableHighlight>
+                          <TouchableHighlight
+                            style={styles.modalButtonDisable}
+                            disabled={true}
+                            onPress={() => {
+                              LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
+                              this.setState({ status: { ...status, addButton: status.addButton + 1, HuongBanCong: true }, modalVisible: false })
+                            }}>
+                            <Text style={styles.textStyle}>{language === "VIE" ? "Hướng Ban Công" : "Balcony Direction"}</Text>
+                          </TouchableHighlight>
                           {/* }
                           {!status.NoiThat && */}
-                            <TouchableHighlight
-                              style={styles.modalButtonDisable}
-                              disabled={true}
-                              onPress={() => {
-                                LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
-                                this.setState({ status: { ...status, addButton: status.addButton + 1, NoiThat: true }, modalVisible: false })
-                              }}>
-                              <Text style={styles.textStyle}>{language === "VIE" ? "Nội Thất" : "Furniture"}</Text>
-                            </TouchableHighlight>
+                          <TouchableHighlight
+                            style={styles.modalButtonDisable}
+                            disabled={true}
+                            onPress={() => {
+                              LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
+                              this.setState({ status: { ...status, addButton: status.addButton + 1, NoiThat: true }, modalVisible: false })
+                            }}>
+                            <Text style={styles.textStyle}>{language === "VIE" ? "Nội Thất" : "Furniture"}</Text>
+                          </TouchableHighlight>
                           {/* } */}
                         </View>
 
@@ -906,7 +992,7 @@ export default class ChungCuTestScreen extends React.Component {
         </KeyboardAvoidingView>
         <BottomSheet
           ref={this.sheetRef}
-          snapPoints={[0, 300, 450]}
+          snapPoints={[0, 200, 300]}
           borderRadius={10}
           renderContent={this.renderContent}
         />
@@ -919,7 +1005,7 @@ export default class ChungCuTestScreen extends React.Component {
 const styles = StyleSheet.create({
 
   box: {
-    height: 200,
+    height: 400,
     width: "100%",
     // backgroundColor: "green"
   },
@@ -995,7 +1081,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     textAlign: 'center',
-    fontSize: 18,
+    fontSize: 16,
   },
   modalText: {
     marginBottom: 15,
@@ -1045,26 +1131,33 @@ const styles = StyleSheet.create({
   },
 
   priceWrapper: {
-    flexDirection: "row",
     alignSelf: "center",
-    width: width / 2,
+    width: width / 1.5,
     justifyContent: "center",
     marginTop: -15,
+    // backgroundColor: "pink"
     // borderBottomWidth:10,
     // borderBottomColor: "red"
   },
   priceText: {
-    fontSize: height * width / 16000,
+    fontSize: 28,
     fontWeight: "700",
     color: "#fff",
     marginLeft: 10,
   },
   noPriceText: {
-    fontSize: height * width / 16000,
+    fontSize: 28,
     fontWeight: "700",
     color: "#fff",
     alignSelf: "center",
     textAlign: "center"
+  },
+  priceTextSmall: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#fff",
+    marginTop: 8,
+    alignSelf: "flex-end"
   },
   refreshAndPercentWrapper: {
     flexDirection: "row",
@@ -1136,8 +1229,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#7066f6",
     justifyContent: "center",
     alignItems: "center",
-    height: 60,
-    width: width / 3,
+    height: 50,
+    width: width / 3.5,
     borderRadius: 30,
   },
   testWrapper1: {

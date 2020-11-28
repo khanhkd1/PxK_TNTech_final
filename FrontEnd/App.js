@@ -12,6 +12,8 @@ import DuAnScreen from './screens/DuAnScreen';
 import HistoryTableScreen from './screens/HistoryTableScreen';
 import GuideScreen from './screens/GuideScreen';
 import ChartScreen from './screens/ChartScreen';
+import ApiChartView from './screens/ApiChartView';
+
 
 
 const Stack = createStackNavigator();
@@ -29,6 +31,7 @@ export default class App extends React.Component {
           <Stack.Screen name="HistoryTableScreen" component={HistoryTableScreen} />
           <Stack.Screen name="GuideScreen" component={GuideScreen} />
           <Stack.Screen name="ChartScreen" component={ChartScreen} />
+          <Stack.Screen name="ApiChartView" component={ApiChartView} />
           <Stack.Screen name="Map" component={Map} />
         </Stack.Navigator>
       </NavigationContainer>
