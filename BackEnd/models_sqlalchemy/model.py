@@ -7,7 +7,7 @@ Base = declarative_base()
 # khoi tao ket noi vao co so du lieu
 def ConnectToDB():
 	# engine = create_engine('mysql+mysqldb://b86499e8070ca1:de0560a9@us-cdbr-east-02.cleardb.com/heroku_80825e0f737d3a6?charset=utf8mb4')
-	engine = create_engine('mysql+mysqldb://shop_online:1e#5ls1L@27.118.16.110/shop_online?charset=utf8mb4')
+	engine = create_engine('mysql+mysqldb://shop_online:pass@27.118.16.110/shop_online?charset=utf8mb4')
 	Session = sessionmaker(bind=engine)
 	return Session
 
